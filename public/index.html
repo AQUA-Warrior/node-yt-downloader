@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>youtube downloader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .container {
+      margin-top: 20px;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .input-group {
+      display: flex;
+      margin-bottom: 15px;
+    }
+    #videoUrl {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px 0 0 4px;
+    }
+    #fetchBtn {
+      padding: 8px 16px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #4285f4;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 2s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .video-info {
+      margin-top: 20px;
+      display: none;
+      text-align: center;
+    }
+    .thumbnail {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 15px;
+    }
+    .res-btn {
+      margin: 5px;
+      padding: 8px 16px;
+      background-color: white;
+      color: #4285f4;
+      border: 1px solid #4285f4;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .res-btn:hover {
+      background-color: #e6f0ff;
+    }
+    .download-status {
+      margin-top: 20px;
+      display: none;
+    }
+    .alert {
+      padding: 10px;
+      background-color: #d9edf7;
+      border: 1px solid #bce8f1;
+      border-radius: 4px;
+      color: #31708f;
+    }
+    .download-link {
+      text-align: center;
+      margin-top: 15px;
+    }
+    .download-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      margin-top: 10px;
+      background-color: #5cb85c;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>youtube downloader</h1>
+    
+    <div class="card">
+      <div class="input-group">
+        <input type="text" id="videoUrl" placeholder="paste youtube url here">
+        <button id="fetchBtn">search</button>
+      </div>
+    </div>
+    
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>searching</p>
+    </div>
+    
+    <div class="video-info card">
+      <img src="" alt="video thumbnail" class="thumbnail" id="videoThumb">
+      <h3 id="videoTitle"></h3>
+      <p id="videoDuration"></p>
+      
+      <h4>available resolutions</h4>
+      <div id="resContainer"></div>
+    </div>
+    
+    <div class="download-status card">
+      <h4>download status</h4>
+      <div class="alert" id="downloadMsg"></div>
+      <div class="download-link" id="downloadLink"></div>
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>
