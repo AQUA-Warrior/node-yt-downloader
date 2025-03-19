@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         if (!response.ok) {
-          throw new Error('fetch failed');
+          throw new Error('search failed');
         }
         
         const data = await response.json();
