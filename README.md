@@ -14,3 +14,7 @@ A Node.js app to download Youtube videos with selectable resolution
 
 ## Node.js dependencies
 - `npm install`
+
+## Usage
+- Start the server `npm start`
+- Open your browser to `http://localhost:3000`
