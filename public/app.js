@@ -1,105 +1,126 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const url_input = document.getElementById('videoUrl');
-    const fetch_btn = document.getElementById('fetchBtn');
-    const loading = document.querySelector('.loading');
-    const video_info = document.querySelector('.video-info');
-    const thumb = document.getElementById('videoThumb');
-    const title = document.getElementById('videoTitle');
-    const duration = document.getElementById('videoDuration');
-    const res_container = document.getElementById('resContainer');
-    const dl_status = document.querySelector('.download-status');
-    const dl_msg = document.getElementById('downloadMsg');
-    const dl_link = document.getElementById('downloadLink');
-    
-    function format_time(seconds) {
-      const min = Math.floor(seconds / 60);
-      const sec = Math.floor(seconds % 60);
-      return `${min}:${sec.toString().padStart(2, '0')}`;
-    }
-    
-    fetch_btn.addEventListener('click', async function() {
-      const url = url_input.value.trim();
-      
-      if (!url) {
-        alert('enter url');
-        return;
-      }
-      
-      loading.style.display = 'block';
-      video_info.style.display = 'none';
-      dl_status.style.display = 'none';
-      
-      try {
-        const response = await fetch('/api/video-info', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ url })
-        });
-        
-        if (!response.ok) {
-          throw new Error('fetch failed');
-        }
-        
-        const data = await response.json();
-        
-        thumb.src = data.thumbnail;
-        title.textContent = data.title;
-        duration.textContent = data.duration ? `duration: ${format_time(data.duration)}` : '';
-        
-        res_container.innerHTML = '';
-        data.resolutions.forEach(res => {
-          const btn = document.createElement('button');
-          btn.className = 'res-btn';
-          btn.textContent = `${res}p`;
-          btn.addEventListener('click', () => download_video(url, res));
-          res_container.appendChild(btn);
-        });
-        
-        video_info.style.display = 'block';
-      } catch (error) {
-        console.error('error:', error);
-        alert('fetch failed try again');
-      } finally {
-        loading.style.display = 'none';
-      }
-    });
-    
-    async function download_video(url, res) {
-      dl_status.style.display = 'block';
-      dl_msg.textContent = 'download starting';
-      dl_link.innerHTML = '';
-      
-      try {
-        const response = await fetch('/api/download', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ url, res })
-        });
-        
-        if (!response.ok) {
-          throw new Error('download failed');
-        }
-        
-        const data = await response.json();
-        
-        dl_msg.textContent = 'download in progress when done use link below';
-        
-        const link = document.createElement('a');
-        link.href = data.downloadUrl;
-        link.className = 'download-btn';
-        link.textContent = `download ${res}p mp4`;
-        link.download = data.filename;
-        dl_link.appendChild(link);
-      } catch (error) {
-        console.error('error:', error);
-        dl_msg.textContent = 'download failed try again';
-        dl_msg.style.backgroundColor = '#f2dede';
-        dl_msg.style.borderColor = '#ebccd1';
-        dl_msg.style.color = '#a94442';
-      }
-    }
+document.addEventListener('DOMContentLoaded', () => {
+  const ui = initializeUI();
+  setupEventListeners(ui);
+});
+
+function initializeUI() {
+  return {
+      urlInput: document.getElementById('videoUrl'),
+      searchBtn: document.getElementById('fetchBtn'),
+      loadingIndicator: document.querySelector('.loading'),
+      videoDetails: document.querySelector('.video-info'),
+      thumbnail: document.getElementById('videoThumb'),
+      titleElement: document.getElementById('videoTitle'),
+      durationElement: document.getElementById('videoDuration'),
+      qualityOptions: document.getElementById('resContainer'),
+      downloadPanel: document.querySelector('.download-status'),
+      statusMessage: document.getElementById('downloadMsg')
+  };
+}
+
+function setupEventListeners(ui) {
+  ui.searchBtn.addEventListener('click', () => handleVideoSearch(ui));
+}
+
+async function handleVideoSearch(ui) {
+  const videoUrl = ui.urlInput.value.trim();
+  if (!videoUrl) {
+      alert('Please enter a valid YouTube URL');
+      return;
+  }
+
+  showLoading(ui);
+  
+  try {
+      const videoInfo = await fetchVideoInfo(videoUrl);
+      displayVideoDetails(videoInfo, videoUrl, ui);
+  } catch (err) {
+      alert(err.message);
+  } finally {
+      hideLoading(ui);
+  }
+}
+
+function showLoading(ui) {
+  ui.loadingIndicator.style.display = 'block';
+  ui.videoDetails.style.display = 'none';
+  ui.downloadPanel.style.display = 'none';
+}
+
+function hideLoading(ui) {
+  ui.loadingIndicator.style.display = 'none';
+}
+
+async function fetchVideoInfo(videoUrl) {
+  const response = await fetch('/api/video-info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: videoUrl })
   });
+
+  if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error);
+  }
+
+  return response.json();
+}
+
+function displayVideoDetails(videoInfo, videoUrl, ui) {
+  ui.thumbnail.src = videoInfo.thumbnail;
+  ui.titleElement.textContent = videoInfo.title;
+  ui.durationElement.textContent = `Duration: ${formatTime(videoInfo.duration)}`;
+
+  ui.qualityOptions.innerHTML = '';
+  videoInfo.resolutions.forEach(res => {
+      const btn = document.createElement('button');
+      btn.className = 'res-btn';
+      btn.textContent = `${res}p`;
+      btn.onclick = () => startDownload(videoUrl, res, ui);
+      ui.qualityOptions.appendChild(btn);
+  });
+
+  ui.videoDetails.style.display = 'block';
+}
+
+function formatTime(seconds) {
+  const min = Math.floor(seconds / 60);
+  const sec = Math.floor(seconds % 60);
+  return `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+async function startDownload(videoUrl, quality, ui) {
+  ui.downloadPanel.style.display = 'block';
+  ui.statusMessage.textContent = 'Starting download...';
+
+  try {
+      const response = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: videoUrl, res: quality })
+      });
+
+      if (!response.ok) throw new Error('Download failed');
+      
+      const { downloadUrl, filename } = await response.json();
+      triggerDownload(downloadUrl, filename);
+      
+      // Cleanup after 1 minute
+      setTimeout(() => {
+          fetch(`/api/delete/${filename}`, { method: 'DELETE' })
+              .catch(console.error);
+      }, 60000);
+  } catch (err) {
+      ui.statusMessage.textContent = `Error: ${err.message}`;
+  }
+}
+
+function triggerDownload(downloadUrl, filename) {
+  const downloadLink = document.createElement('a');
+  downloadLink.style.display = 'none';
+  downloadLink.href = downloadUrl;
+  downloadLink.download = filename; // Forces download instead of navigation
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+}
